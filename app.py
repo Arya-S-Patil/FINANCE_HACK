@@ -1,163 +1,280 @@
-import os
+import ollama
 import json
-import requests
-from dotenv import load_dotenv
+import sys
+from flask import Flask, request, jsonify
 
-class FinancialAnalysisModel:
-    def __init__(self):
+class FinancialAssistant:
+    def __init__(self, model="deepseek-r1:14b"):
         """
-        Initialize the Financial Analysis Model with Hugging Face Inference API
-        """
-        # Load environment variables
-        load_dotenv()
+        Initialize the financial assistant with a specified Ollama model.
         
-        # Hugging Face API endpoint and headers
-        self.api_url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-        self.headers = {
-            "Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_KEY', 'API KEY HERE')}",
-            "Content-Type": "application/json"
-        }
-    
-    def generate_financial_analysis(self, financial_data):
-        """
-        Generate a comprehensive financial analysis using Hugging Face API
+        Args:
+            model (str): The Ollama model to use for financial analysis.
         """
         try:
-            # Prepare financial data as a formatted string
-            formatted_data = "\n".join([f"{key}: {value}" for key, value in financial_data.items()])
+            # Verify the model is available in Ollama
+            ollama.list()
+            self.model = model
+        except Exception as e:
+            print(f"Error initializing model: {e}")
+            print("Please ensure Ollama is running and the model is installed.")
+            sys.exit(1)
+
+        # Comprehensive sector benchmarks (same as previous implementation)
+        self.sector_benchmarks = {
+           "Banks and NBFC": {
+                "key_ratios": {
+                    "NIM": {"min": 3.0, "weight": 0.2},
+                    "ROA": {"min": 1.5, "weight": 0.2},
+                    "ROE": {"min": 15.0, "weight": 0.3},
+                    "Gross NPA": {"max": 3.0, "weight": -0.2},
+                    "CAR": {"min": 12.0, "weight": 0.1},
+                    "P/B Ratio": {"max": 3.0, "weight": 0}
+                },
+                "growth_formula": lambda data: (
+                    (0.3 * data.get("ROE", 0)) + 
+                    (0.2 * data.get("ROA", 0)) + 
+                    (0.2 * data.get("NIM", 0)) - 
+                    (0.2 * data.get("Gross NPA", 0)) + 
+                    (0.1 * data.get("CAR", 0))
+                )
+            },
+            "IT & Technology": {
+                "key_ratios": {
+                    "Revenue Growth": {"min": 12.0, "weight": 0.25},
+                    "Operating Margin": {"min": 20.0, "weight": 0.25},
+                    "FCF Margin": {"min": 15.0, "weight": 0.25},
+                    "ROE": {"min": 20.0, "weight": 0.25},
+                    "P/E Ratio": {"max": 30.0, "weight": 0},
+                    "EV/EBITDA": {"max": 15.0, "weight": 0}
+                },
+                "growth_formula": lambda data: (
+                    (0.25 * data.get("Revenue Growth", 0)) + 
+                    (0.25 * data.get("Operating Margin", 0)) + 
+                    (0.25 * data.get("FCF Margin", 0)) + 
+                    (0.25 * data.get("ROE", 0))
+                )
+            },
+            "FMCG & Consumer Goods": {
+                "key_ratios": {
+                    "Revenue Growth": {"min": 8.0, "weight": 0.25},
+                    "Gross Margin": {"min": 50.0, "weight": 0.15},
+                    "ROE": {"min": 18.0, "weight": 0.2},
+                    "Debt-to-Equity": {"max": 0.5, "weight": -0.2},
+                    "Dividend Yield": {"min": 1.5, "weight": 0.05},
+                    "P/E Ratio": {"max": 40.0, "weight": 0}
+                },
+                "growth_formula": lambda data: (
+                    (0.25 * data.get("Revenue Growth", 0)) + 
+                    (0.15 * data.get("Gross Margin", 0)) + 
+                    (0.2 * data.get("ROE", 0)) - 
+                    (0.2 * data.get("Debt-to-Equity", 0)) + 
+                    (0.05 * data.get("Dividend Yield", 0))
+                )
+            },
+            "Automobiles": {
+                "key_ratios": {
+                    "Revenue Growth": {"min": 10.0, "weight": 0.25},
+                    "Operating Margin": {"min": 12.0, "weight": 0.3},
+                    "Debt-to-Equity": {"max": 1.0, "weight": -0.2},
+                    "ROE": {"min": 15.0, "weight": 0.25},
+                    "P/FCF": {"max": 20.0, "weight": 0}
+                },
+                "growth_formula": lambda data: (
+                    (0.3 * data.get("Operating Margin", 0)) + 
+                    (0.25 * data.get("ROE", 0)) - 
+                    (0.2 * data.get("Debt-to-Equity", 0)) + 
+                    (0.25 * data.get("Revenue Growth", 0))
+                )
+            },
+            "Energy, Oil & Gas": {
+                "key_ratios": {
+                    "EBITDA Margin": {"min": 25.0, "weight": 0.3},
+                    "Debt-to-Equity": {"max": 1.2, "weight": -0.2},
+                    "Interest Coverage Ratio": {"min": 4.0, "weight": 0.3},
+                    "P/FCF": {"max": 15.0, "weight": 0},
+                    "Dividend Yield": {"min": 3.0, "weight": 0.2}
+                },
+                "growth_formula": lambda data: (
+                    (0.3 * data.get("EBITDA Margin", 0)) - 
+                    (0.2 * data.get("Debt-to-Equity", 0)) + 
+                    (0.3 * data.get("Interest Coverage Ratio", 0)) + 
+                    (0.2 * data.get("Dividend Yield", 0))
+                )
+            },
+            "Healthcare & Pharmaceuticals": {
+                "key_ratios": {
+                    "Revenue Growth": {"min": 10.0, "weight": 0.25},
+                    "Operating Margin": {"min": 18.0, "weight": 0.2},
+                    "ROE": {"min": 16.0, "weight": 0.2},
+                    "R&D Expenditure": {"min": 5.0, "weight": 0.2},
+                    "P/E Ratio": {"max": 35.0, "weight": 0}
+                },
+                "growth_formula": lambda data: (
+                    (0.25 * data.get("Revenue Growth", 0)) + 
+                    (0.2 * data.get("Operating Margin", 0)) + 
+                    (0.2 * data.get("ROE", 0)) + 
+                    (0.2 * data.get("EBITDA Growth", 0)) + 
+                    (0.15 * data.get("Free Cash Flow Growth", 0))
+                )
+            },
+            "Retail Sector": {
+                "key_ratios": {
+                    "Revenue Growth": {"min": 8.0, "weight": 0.3},
+                    "Operating Margin": {"min": 10.0, "weight": 0.2},
+                    "ROE": {"min": 12.0, "weight": 0.15},
+                    "Debt-to-Equity": {"max": 1.0, "weight": -0.15},
+                    "Free Cash Flow Growth": {"min": 10.0, "weight": 0.2}
+                },
+                "growth_formula": lambda data: (
+                    (0.3 * data.get("Revenue Growth", 0)) + 
+                    (0.2 * data.get("Operating Margin", 0)) + 
+                    (0.15 * data.get("ROE", 0)) - 
+                    (0.15 * data.get("Debt-to-Equity", 0)) + 
+                    (0.2 * data.get("Free Cash Flow Growth", 0))
+                )
+            }
+        }
+
+    def stock_analysis(self, financial_data, sector):
+        """
+        Comprehensive stock analysis with sector-specific benchmarks.
+        
+        Args:
+            financial_data (dict): Dictionary of financial metrics
+            sector (str): The sector of the stock
+        
+        Returns:
+            dict: Detailed stock analysis report
+        """
+        try:
+            # Validate sector
+            if sector not in self.sector_benchmarks:
+                return {
+                    "error": "Sector not recognized", 
+                    "available_sectors": list(self.sector_benchmarks.keys())
+                }
             
-            # Construct prompt
-            prompt = f"""You are a financial expert explaining complex financial metrics to a beginner.
+            # Get sector-specific benchmarks
+            sector_benchmarks = self.sector_benchmarks[sector]
+            
+            # Calculate growth score
+            growth_score = sector_benchmarks["growth_formula"](financial_data)
+            
+            # Evaluate key ratios
+            ratio_analysis = []
+            meets_benchmark = True
+            
+            for ratio, details in sector_benchmarks["key_ratios"].items():
+                value = financial_data.get(ratio)
+                
+                # Check if value exists
+                if value is None:
+                    ratio_analysis.append(f"⚠️ {ratio}: Not provided in financial data")
+                    meets_benchmark = False
+                    continue
+                
+                # Minimum value check
+                if "min" in details:
+                    if value < details["min"]:
+                        ratio_analysis.append(f"❌ {ratio}: {value} (Below benchmark of {details['min']})")
+                        meets_benchmark = False
+                    else:
+                        ratio_analysis.append(f"✅ {ratio}: {value} (Meets benchmark of {details['min']})")
+                
+                # Maximum value check
+                if "max" in details:
+                    if value > details["max"]:
+                        ratio_analysis.append(f"❌ {ratio}: {value} (Above benchmark of {details['max']})")
+                        meets_benchmark = False
+                    else:
+                        ratio_analysis.append(f"✅ {ratio}: {value} (Meets benchmark of {details['max']})")
+            
+            # Prepare comprehensive prompt for AI-generated analysis
+            prompt = f"""
+Provide a comprehensive stock analysis for a company in the {sector} sector.
 
 Financial Data:
-{formatted_data}
+{json.dumps(financial_data, indent=2)}
 
-Please provide:
-1. A simple, easy-to-understand explanation of each key metric
-2. Insights into the company's financial health
-3. Potential flags or areas of concern
-4. Beginner-friendly interpretation of the numbers
+Growth Score: {growth_score:.2f}
 
-Explanation should be:
-- Clear and jargon-free
-- Structured for easy comprehension
-- Highlighting key takeaways"""
+Key Analysis Points:
+1. Interpret the growth score
+2. Evaluate the company's performance against sector benchmarks
+3. Provide investment insights for a beginner in detail
+4. Highlight potential strengths and weaknesses
+5. Suggest areas of further investigation
+
+Key Ratio Analysis:
+{chr(10).join(ratio_analysis)}
+
+Overall Benchmark Status: {"Meets Most Benchmarks" if meets_benchmark else "Does Not Meet All Benchmarks"}
+"""
             
-            # Payload for Hugging Face API
-            payload = {
-                "inputs": prompt,
-                "parameters": {
-                    "max_new_tokens": 1000,
-                    "temperature": 0.7,
-                    "top_p": 0.9
-                }
+            # Generate detailed analysis using Ollama
+            analysis_response = ollama.chat(model=self.model, messages=[{"role": "user", "content": prompt}])
+            
+            return {
+                "sector": sector,
+                "growth_score": growth_score,
+                "ratio_performance": ratio_analysis,
+                "ai_analysis": analysis_response['message']['content'],
+                "meets_benchmark": meets_benchmark
             }
-            
-            # Send request to Hugging Face
-            response = requests.post(self.api_url, headers=self.headers, json=payload)
-            
-            # Check response
-            if response.status_code == 200:
-                analysis = response.json()[0]['generated_text']
-                return analysis.split(prompt)[-1].strip()
-            else:
-                return f"Error: {response.status_code} - {response.text}"
         
         except Exception as e:
-            print(f"Analysis generation error: {e}")
-            return f"Could not generate analysis. Error: {e}"
-    
-    def generate_financial_flags(self, financial_data):
-        """
-        Generate financial flags and potential risks
-        """
-        flags = []
-        
-        # Market Cap and Valuation Flags
-        market_cap = financial_data.get('Market Cap', '0').replace(',', '').replace('Cr.', '')
-        try:
-            market_cap = float(market_cap)
-            if market_cap < 1000:
-                flags.append("Small Market Cap: Potential higher risk")
-            elif market_cap > 100000:
-                flags.append("Large Market Cap: Potentially stable")
-        except ValueError:
-            flags.append("Market Cap: Unable to evaluate")
-        
-        # Stock P/E Ratio Flags
-        try:
-            pe_ratio = float(financial_data.get('Stock P/E', '0'))
-            if pe_ratio > 50:
-                flags.append("High P/E Ratio: Potentially overvalued")
-            elif pe_ratio < 10:
-                flags.append("Low P/E Ratio: Potentially undervalued")
-        except ValueError:
-            flags.append("P/E Ratio: Unable to evaluate")
-        
-        # Profitability Flags
-        try:
-            profit_after_tax = float(financial_data.get('Profit after tax', '0').replace(',', '').replace('Cr.', ''))
-            if profit_after_tax < 100:
-                flags.append("Low Profit: Potential financial challenges")
-        except ValueError:
-            flags.append("Profit: Unable to evaluate")
-        
-        # ROE and ROCE Flags
-        try:
-            roe = float(financial_data.get('ROE', '0').replace('%', ''))
-            roce = float(financial_data.get('ROCE', '0').replace('%', ''))
-            
-            if roe < 10:
-                flags.append("Low Return on Equity: Inefficient capital use")
-            if roce < 10:
-                flags.append("Low Return on Capital Employed: Inefficient capital allocation")
-        except ValueError:
-            flags.append("ROE/ROCE: Unable to evaluate")
-        
-        # Dividend Yield Flag
-        try:
-            dividend_yield = float(financial_data.get('Dividend Yield', '0').replace('%', ''))
-            if dividend_yield < 0.5:
-                flags.append("Low Dividend Yield: May not be attractive for income investors")
-        except ValueError:
-            flags.append("Dividend Yield: Unable to evaluate")
-        
-        return flags
+            return {"error": f"Error performing stock analysis: {str(e)}"}
 
-def main():
-    # Sample financial data
-    financial_data = {
-        "Market Cap": "3,20,366 Cr.",
-        "Current Price": "2,006",
-        "High / Low": "2,030 / 1,419 /",
-        "Stock P/E": "37.4",
-        "Book Value": "428",
-        "Dividend Yield": "0.05 %",
-        "ROCE": "11.7 %",
-        "ROE": "15.3 %",
-        "Face Value": "1.00",
-        "Sales": "1,29,266 Cr.",
-        "OPM": "36.7 %",
-        "Sales growth 3Years": "22.1 %",
-        "Sales growth 5Years": "21.0 %",
-        "Profit after tax": "8,574 Cr.",
-        "Other Inc Prev Ann": "1.46 Cr.",
-        "Chg in DII Hold 3Yr": "2.16 %",
+# Initialize Flask app and Financial Assistant
+app = Flask(__name__)
+financial_assistant = FinancialAssistant()
+
+@app.route('/analyze_stock', methods=['POST'])
+def analyze_stock():
+    """
+    Flask route for stock analysis.
+    
+    Expected JSON input:
+    {
+        "financial_data": {...},
+        "sector": "Banks and NBFC"
     }
+    """
+    # Check if JSON data is present
+    if not request.is_json:
+        return jsonify({"error": "Request must be JSON"}), 400
     
-    # Create financial analysis model
-    model = FinancialAnalysisModel()
+    # Parse input data
+    data = request.get_json()
     
-    # Generate analysis
-    analysis = model.generate_financial_analysis(financial_data)
-    print("\n=== Financial Analysis ===")
-    print(analysis)
+    # Validate required fields
+    if 'financial_data' not in data or 'sector' not in data:
+        return jsonify({
+            "error": "Missing required fields",
+            "required_fields": ["financial_data", "sector"]
+        }), 400
     
-    # Generate financial flags
-    flags = model.generate_financial_flags(financial_data)
-    print("\n=== Financial Flags ===")
-    for flag in flags:
-        print(f"- {flag}")
+    # Perform stock analysis
+    analysis_result = financial_assistant.stock_analysis(
+        data['financial_data'], 
+        data['sector']
+    )
+    
+    # Check if analysis returned an error
+    if 'error' in analysis_result:
+        return jsonify(analysis_result), 400
+    
+    return jsonify(analysis_result)
 
-if __name__ == "__main__":
-    main()
+@app.route('/available_sectors', methods=['GET'])
+def get_available_sectors():
+    """
+    Returns list of available sectors for stock analysis.
+    """
+    return jsonify({
+        "sectors": list(financial_assistant.sector_benchmarks.keys())
+    })
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
