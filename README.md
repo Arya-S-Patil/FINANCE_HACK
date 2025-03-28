@@ -124,6 +124,7 @@ Growth Score = (0.3 × Revenue Growth) + (0.2 × Operating Margin) +
 - AI-powered financial insights
 - Comprehensive multi-sector analysis
 - Research-backed analytical approach
+- We have used web scrapping to get real time data which makes our model more accurate. 
 
 ## Prerequisites
 - Python 3.8+
