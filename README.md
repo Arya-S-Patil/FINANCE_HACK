@@ -1,6 +1,6 @@
 # FINANCE_HACK
 
-[![Watch the video]][https://www.youtube.com/watch?v=Y3YVD_EWiRM]
+[![Watch the video](https://img.youtube.com/vi/Y3YVD_EWiRM/0.jpg)](https://www.youtube.com/watch?v=Y3YVD_EWiRM)
 ## Overview
 Financial Insights Analyzer is an advanced, open-source tool that helps beginners understand complex financial data by providing simplified, easy-to-understand explanations of a company's financial metrics.
 
