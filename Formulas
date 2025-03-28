@@ -1,0 +1,114 @@
+
+
+### Detailed Sector Benchmarks and Growth Scoring Methodology Used for this Project
+
+#### 1. Banks and NBFC Sector
+
+Key Ratios:
+- Net Interest Margin (NIM) ≥ 3%
+- Return on Assets (ROA) ≥ 1.5%
+- Return on Equity (ROE) ≥ 15%
+- Gross NPA ≤ 3%
+- Capital Adequacy Ratio (CAR) ≥ 12%
+- Price-to-Book (P/B) Ratio ≤ 3
+
+Growth Score Formula:
+```
+Growth Score = (0.3 × ROE) + (0.2 × ROA) + (0.2 × NIM) - (0.2 × NPA) + (0.1 × CAR)
+```
+A higher score indicates better growth potential
+
+#### 2. IT & Technology Sector
+
+Key Ratios:
+- Revenue Growth ≥ 12%
+- Operating Margin ≥ 20%
+- FCF Margin ≥ 15%
+- ROE ≥ 20%
+- P/E Ratio ≤ 30
+- EV/EBITDA ≤ 15
+
+Growth Score Formula:
+```
+Growth Score = (0.25 × Revenue Growth) + (0.25 × Operating Margin) + 
+               (0.25 × FCF Margin) + (0.25 × ROE)
+```
+
+#### 3. FMCG & Consumer Goods Sector
+
+Key Ratios:
+- Revenue Growth ≥ 8%
+- Gross Margin ≥ 50%
+- ROE ≥ 18%
+- Debt-to-Equity ≤ 0.5
+- Dividend Yield ≥ 1.5%
+- P/E Ratio ≤ 40
+
+Growth Score Formula:
+```
+Growth Score = (0.25 × Revenue Growth) + (0.15 × Gross Margin) + 
+               (0.2 × ROE) - (0.2 × D/E) + (0.05 × Dividend Yield)
+```
+
+#### 4. Automobiles Sector
+
+Key Ratios:
+- Revenue Growth ≥ 10%
+- Operating Margin ≥ 12%
+- Debt-to-Equity ≤ 1
+- ROE ≥ 15%
+- P/FCF ≤ 20
+
+Growth Score Formula:
+```
+Growth Score = (0.3 × Operating Margin) + (0.25 × ROE) - 
+               (0.2 × D/E) + (0.25 × Revenue Growth)
+```
+
+#### 5. Energy, Oil & Gas Sector
+
+Key Ratios:
+- EBITDA Margin ≥ 25%
+- Debt-to-Equity ≤ 1.2
+- Interest Coverage Ratio ≥ 4
+- P/FCF ≤ 15
+- Dividend Yield ≥ 3%
+
+Growth Score Formula:
+```
+Growth Score = (0.3 × EBITDA Margin) - (0.2 × D/E) + 
+               (0.3 × Interest Coverage) + (0.2 × Dividend Yield)
+```
+
+#### 6. Healthcare & Pharmaceuticals Sector
+
+Key Ratios:
+- Revenue Growth ≥ 10%
+- Operating Margin ≥ 18%
+- ROE ≥ 16%
+- R&D Expenditure ≥ 5% of Revenue
+- P/E Ratio ≤ 35
+
+Growth Score Formula:
+```
+Growth Score = (0.25 × Revenue Growth) + (0.2 × Operating Margin) + 
+               (0.2 × ROE) + (0.2 × EBITDA Growth) + 
+               (0.15 × Free Cash Flow Growth)
+```
+
+#### 7. Retail Sector
+
+Key Ratios:
+- Inventory Turnover Ratio
+- Operating Margin
+- Revenue Growth
+- Debt-to-Equity (D/E)
+- Return on Equity (ROE)
+
+Growth Score Formula:
+```
+Growth Score = (0.3 × Revenue Growth) + (0.2 × Operating Margin) + 
+               (0.15 × ROE) - (0.15 × D/E) + 
+               (0.2 × Free Cash Flow Growth)
+```
+
