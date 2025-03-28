@@ -159,7 +159,7 @@ ollama pull deepseek-r1:14b  # Default model used in the script
 
 ### Running the Financial Analysis Tool
 ```bash
-python financial_analyzer.py
+python app.py(or python model.py)
 ```
 
 ## Supported Sectors
