@@ -137,8 +137,8 @@ Growth Score = (0.3 × Revenue Growth) + (0.2 × Operating Margin) +
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/financial-insights-analyzer.git
-cd financial-insights-analyzer
+git clone [https://github.com/Arya-S-Patil/FINANCE_HACK.git]
+cd FINANCE_HACK
 ```
 
 ### 2. Set Up Virtual Environment
